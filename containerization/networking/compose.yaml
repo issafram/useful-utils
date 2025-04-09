@@ -10,9 +10,18 @@ networks:
         - subnet: 10.9.1.0/24
 
 services:
+  unbound:
+    container_name: unbound
+    image: mvance/unbound:1.22.0
+    restart: unless-stopped
+    networks:
+      networking-network:
+        ipv4_address: 10.9.1.101
   pihole:
-    image: pihole/pihole:2025.03.1
+    image: pihole/pihole:2025.04.0
     container_name: pihole
+    depends_on:
+      - unbound
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -21,7 +30,7 @@ services:
     environment:
       TZ: 'America/Detroit'
       WEBPASSWORD: 'pihole'
-      FTLCONF_dns_upstreams: 1.1.1.1;1.0.0.1
+      FTLCONF_dns_upstreams: 10.9.1.101#53
     volumes:
       - './volumes/pihole/etc-pihole:/etc/pihole'
       - './volumes/pihole/etc-dnsmasq.d:/etc/dnsmasq.d'
