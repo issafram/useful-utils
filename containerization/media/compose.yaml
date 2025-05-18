@@ -1,0 +1,65 @@
+networks:
+  networking-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.1.0/24
+  cloudflared-network:
+    name: cloudflared_cloudflared-network
+    external: true
+
+volumes:
+  movies:
+    driver_opts:
+      type: cifs
+      o: "username=USER,password=PASSWORD"
+      device: "//SHARE/movies"
+  tv:
+    driver_opts:
+      type: cifs
+      o: "username=USER,password=PASSWORD"
+      device: "//SHARE/tv"
+  music:
+    driver_opts:
+      type: cifs
+      o: "username=USER,password=PASSWORD"
+      device: "//SHARE/music"
+
+services:
+  jellyfin:
+    container_name: jellyfin
+    image: jellyfin/jellyfin
+    restart: unless-stopped
+    ports:
+      - "8096:8096/tcp"
+    volumes:
+      - movies:/media/movies:ro
+      - tv:/media/tv:ro
+      - music:/media/music:ro
+      - "./volumes/jellyfin/config:/config"
+      - "./volumes/jellyfin/cache:/cache"
+    runtime: nvidia
+    deploy: # Only use if you want to use hardware transcoding support (GPU)
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      cloudflared-network:
+        ipv4_address: 10.11.1.100
+  
+  universalmediaserver:
+    container_name: universalmediaserver
+    image: universalmediaserver/ums:14.12.1
+    network_mode: host # Needed for DLNA
+    restart: unless-stopped
+    environment:
+      UMS_PROFILE: "/profile"
+      JVM_OPTS: "-Xmx2048m"
+    volumes:
+      - "./volumes/ums/UMS.conf:/profile"
+      - movies:/media/movies:ro
+      - tv:/media/tv:ro
+      - music:/media/music:ro

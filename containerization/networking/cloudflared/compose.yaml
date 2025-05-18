@@ -1,0 +1,16 @@
+networks:
+  cloudflared-network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.11.1.0/24
+
+services:
+  cloudflared-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    command: tunnel --no-autoupdate run --token YOUR_TOKEN
+    restart: unless-stopped
+    networks:
+      cloudflared-network:
+        ipv4_address: 10.11.1.99
