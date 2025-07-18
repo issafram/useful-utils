@@ -18,7 +18,7 @@ services:
       networking-network:
         ipv4_address: 10.9.1.101
   pihole:
-    image: pihole/pihole:2025.06.2
+    image: pihole/pihole:2025.07.1
     container_name: pihole
     depends_on:
       - unbound
